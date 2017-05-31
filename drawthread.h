@@ -19,14 +19,19 @@ signals:
 public slots:
 
 private:
-    int m_count;   
+    int m_count;
+
+    int contoursDis;//区域性病害合并间距参数
+    int linesDis;//线性病害合并间距参数
 
     void run();
 
     bool CopyImages(int i);
     void CutLastImg(int start, int end);
+    void CutLastImg2(int start, int end);
     void DrawDisease();
 
+    QString findDiseaseType_SX(QString type); 
 };
 
 #endif // DRAWTHREAD_H

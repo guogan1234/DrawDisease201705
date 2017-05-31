@@ -57,6 +57,8 @@ private:
     //清空重新处理
     void ClearToRestart();
 
+    void FillDiseaseType();
+
     //测试代码
     void Test0();
     void Test1();

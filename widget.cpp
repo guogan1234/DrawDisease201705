@@ -20,6 +20,9 @@ QList<diseaseInfo> diseaseList;
 QMap<int,sessionDisease> sessionMap;
 QMap<int,sessionDisease>::iterator sessionMapIter;
 
+QHash<int,diseaseType> typeHash;
+QHash<int,diseaseType>::iterator typeHashIter;
+
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
@@ -27,8 +30,9 @@ Widget::Widget(QWidget *parent) :
     ui->setupUi(this);
 
     InitParams();
+    FillDiseaseType();
     ui->label->setVisible(false);
-    ui->testBtn->setVisible(false);
+//    ui->testBtn->setVisible(false);
     ui->hideWidget->setVisible(false);
 }
 
@@ -166,7 +170,7 @@ void Widget::readDiseaseExcel(QString path)
                 //图像距离段图像的距离
                 left = dis - sessionIndex*sessionMile;
             }
-            else if(j == 13){//病害类型，需要修改
+            else if(j == 4){//病害类型，需要修改
                 temp.diseaseType = var.toString();
             }
             else if(j == 15){
@@ -243,12 +247,64 @@ void Widget::ClearToRestart()
     ui->remainLE->clear();
 }
 
+void Widget::FillDiseaseType()
+{
+    QString projectPath = QDir::currentPath();
+    projectPath += "/Data/diseaseType.xlsx";
+    qDebug()<<"appPath:"<<projectPath;
+//    char* path = "F:/QtMyProjectTest/DrawDisease201705/Data/diseaseType.xlsx";
+//    char* ch_projectPath = projectPath.toLocal8Bit().data();
+//    char* cat = "/Data/diseaseType.xlsx";
+//    strcat(ch_projectPath,cat);
+//    char path[128];
+    QAxObject excel("Excel.Application");
+    excel.setProperty("Visble",false);
+    QAxObject* workbooks = excel.querySubObject("WorkBooks");
+    QAxObject* workbook = workbooks->querySubObject("Open(QString,QVariant,QVariant)",projectPath,3,true);
+    QAxObject* worksheet1 = workbook->querySubObject("Worksheets(int)",1);
+
+    QAxObject* usedRange = worksheet1->querySubObject("UsedRange");
+    QAxObject* rows = usedRange->querySubObject("Rows");
+    QAxObject* columns = usedRange->querySubObject("Columns");
+
+    //Excel索引从1开始
+    int intRowStart = usedRange->property("Row").toInt();
+    int intColStart = usedRange->property("Column").toInt();
+    int intRows = rows->property("Count").toInt();
+    int intCols = columns->property("Count").toInt();
+    qDebug()<<"FillDiseaseType:"<<intRowStart<<intColStart<<intRows<<intCols;
+    for(int i = intRowStart;i<intRowStart + intRows;i++){
+        diseaseType temp;
+        for(int j = intColStart;j<intColStart + intCols;j++)
+        {
+            QAxObject * range = worksheet1->querySubObject("Cells(int,int)", i, j );
+            QVariant var = range->property("Value");
+            if(j == 1){
+                temp.id = var.toInt();
+            }
+            else if(j==2){
+                temp.type = var.toString();
+            }
+            else if(j == 3){
+                temp.type_SX = var.toString();
+            }
+        }
+        typeHash.insert(temp.id,temp);
+    }
+}
+
 void Widget::Test0()
 {
-    Mat img = imread("150.jpg");
-    if(img.empty()){
-        qDebug()<<"imread failed!!!";
-    }
+//    char ch[128] = "./150.jpg";
+    QString qStr = "F:/QtMyProjectTest/DrawDisease201705/150.jpg";
+//    string str("./150.jpg");
+//    string str = qStr.toStdString();
+//    cout<<"@@@"<<str;
+//    Mat img = imread("F://QtMyProjectTest//DrawDisease201705//150.jpg");//编译通过，运行出错，无法识别char*常量字符串，读取图像失败
+     Mat img = imread(qStr.toLocal8Bit().data());//编译通过，运行出错，无法识别char*常量字符串转换的string,，读取图像失败
+     if(img.empty()){
+         qDebug()<<"Load failed!!!";
+     }
     //创建一个名字为MyWindow的窗口
 //    namedWindow("MyWindow", CV_WINDOW_AUTOSIZE);
     //在MyWindow的窗中中显示存储在img中的图片
@@ -308,8 +364,8 @@ void Widget::updateRemain(int count, int ms)
 
 void Widget::on_testBtn_clicked()
 {
-//    Test0();//测试使用opencv2.0版本函数库
-    Test1();
+    Test0();//测试使用opencv2.0版本函数库
+//    Test1();
 }
 
 void Widget::on_pushButton_2_clicked()
