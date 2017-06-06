@@ -22,9 +22,11 @@ HEADERS  += widget.h \
 
 FORMS    += widget.ui
 
-INCLUDEPATH += ./OpencvLib/include
+INCLUDEPATH += ./opencv244/opencv/include
 
-LIBS += -L./OpencvLib/vLibsAndDll -lopencv_core244 -lopencv_highgui244 -lopencv_calib3d244\
-    -lopencv_contrib244 -lopencv_features2d244 -lopencv_flann244 -lopencv_gpu244 -lopencv_imgproc244 -lopencv_legacy244\
-    -lopencv_ml244 -lopencv_nonfree244 -lopencv_objdetect244 -lopencv_photo244 -lopencv_stitching244 -lopencv_ts244\
-    -lopencv_video244 -lopencv_videostab244
+#F:\\QtMyProjectTest\\DrawDisease201705\\opencv244\\opencv\\lib
+LIBS += -lopencv_calib3d244.dll -lopencv_contrib244.dll -lopencv_core244.dll\
+    -lopencv_features2d244.dll -lopencv_flann244.dll -lopencv_gpu244.dll -lopencv_highgui244.dll\
+    -lopencv_imgproc244.dll -lopencv_legacy244.dll -lopencv_ml244.dll -lopencv_nonfree244.dll\
+    -lopencv_objdetect244.dll -lopencv_photo244.dll -lopencv_stitching244.dll -lopencv_ts244\
+    -lopencv_video244.dll -lopencv_videostab244.dll -lzbar.dll -L./opencv244/opencv/lib

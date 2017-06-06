@@ -32,4 +32,21 @@ struct diseaseType{
     QString type_SX;
 };
 
+struct finalDiseaseInfo{
+    QString startMile;
+    bool IsMin;//距离边墙距离，是否取的小值
+    double distanceRight;
+    double length;
+    double area;
+};
+
+struct tunnelMileInfo{
+    QString tunnelName;
+    QString nameParam1;
+    QString nameParam2;
+    QString startMile;
+    QString endMile;
+    QString finalTunnelName;
+};
+
 #endif // INFO_H

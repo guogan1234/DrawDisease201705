@@ -30,6 +30,10 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+    void on_pushButton_3_clicked();
+
+    void threadWorkFinish();
+
 private:
     Ui::Widget *ui;
 
@@ -39,11 +43,15 @@ private:
 
     void readDiseaseExcel(QString path);
 
+    void readTunnelMileExcel();
+    void compareTunnelMile(QString start,QString end);
+    double tunnelNoToMile(QString no);
+
     int getIndexByImgName(QString name);
 
     double oneImgDis;
-    double disPixelW;//每个宽度距离的像素值
-    double disPixelH;//每个相机图像高度的像素值
+    double disPixelW;//段图像每个像素值的宽度值
+    double disPixelH;//每个相机图像高度所占段图像的像素值
     double bigImgW;//段图像的宽度像素值
     double bigImgH;//段图像的高度像素值
     double smallImgW;//原始小图像的宽度像素值
@@ -51,6 +59,8 @@ private:
     //初始化
     int sessionMile;
     int cameraCount;
+
+    QString theTunnelMile;
 
     void InitParams();
 

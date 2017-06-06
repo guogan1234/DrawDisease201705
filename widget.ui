@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>621</width>
-    <height>132</height>
+    <width>626</width>
+    <height>135</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -214,6 +214,45 @@
    </property>
    <property name="text">
     <string>单条耗时(ms)：</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_3">
+   <property name="geometry">
+    <rect>
+     <x>230</x>
+     <y>10</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>存入Excel</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>132</x>
+     <y>14</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="isFinishCBX">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>13</y>
+     <width>111</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>是否处理完成</string>
    </property>
   </widget>
  </widget>

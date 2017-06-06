@@ -13,6 +13,7 @@
 #include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QCheckBox>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QLabel>
@@ -42,12 +43,15 @@ public:
     QLineEdit *inOutLE;
     QLineEdit *useTimeLE;
     QLabel *label_5;
+    QPushButton *pushButton_3;
+    QLabel *label_2;
+    QCheckBox *isFinishCBX;
 
     void setupUi(QWidget *Widget)
     {
         if (Widget->objectName().isEmpty())
             Widget->setObjectName(QStringLiteral("Widget"));
-        Widget->resize(621, 132);
+        Widget->resize(626, 135);
         pushButton = new QPushButton(Widget);
         pushButton->setObjectName(QStringLiteral("pushButton"));
         pushButton->setGeometry(QRect(20, 10, 91, 21));
@@ -103,6 +107,15 @@ public:
         label_5 = new QLabel(Widget);
         label_5->setObjectName(QStringLiteral("label_5"));
         label_5->setGeometry(QRect(300, 100, 81, 16));
+        pushButton_3 = new QPushButton(Widget);
+        pushButton_3->setObjectName(QStringLiteral("pushButton_3"));
+        pushButton_3->setGeometry(QRect(230, 10, 75, 23));
+        label_2 = new QLabel(Widget);
+        label_2->setObjectName(QStringLiteral("label_2"));
+        label_2->setGeometry(QRect(132, 14, 54, 12));
+        isFinishCBX = new QCheckBox(Widget);
+        isFinishCBX->setObjectName(QStringLiteral("isFinishCBX"));
+        isFinishCBX->setGeometry(QRect(130, 13, 111, 16));
 
         retranslateUi(Widget);
 
@@ -121,6 +134,9 @@ public:
         readDisease->setText(QApplication::translate("Widget", "\350\257\273\345\217\226\347\227\205\345\256\263\344\277\241\346\201\257", 0));
         readInOut->setText(QApplication::translate("Widget", "\350\257\273\345\217\226\350\277\233\345\207\272\344\277\241\346\201\257", 0));
         label_5->setText(QApplication::translate("Widget", "\345\215\225\346\235\241\350\200\227\346\227\266(ms)\357\274\232", 0));
+        pushButton_3->setText(QApplication::translate("Widget", "\345\255\230\345\205\245Excel", 0));
+        label_2->setText(QString());
+        isFinishCBX->setText(QApplication::translate("Widget", "\346\230\257\345\220\246\345\244\204\347\220\206\345\256\214\346\210\220", 0));
     } // retranslateUi
 
 };

@@ -23,13 +23,26 @@ QMap<int,sessionDisease>::iterator sessionMapIter;
 QHash<int,diseaseType> typeHash;
 QHash<int,diseaseType>::iterator typeHashIter;
 
+//最终病害信息存入Excel
+extern bool finalOK;
+extern QList<finalDiseaseInfo> finalDiseaseList;
+
+//隧道起始里程信息
+QList<tunnelMileInfo> tunnelMileList;
+
+//隧道上下行标识
+bool isMinToMax;
+
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget)
 {
+    qDebug()<<"1111";
     ui->setupUi(this);
 
+    qDebug()<<"2222";
     InitParams();
+    qDebug()<<"3333";
     FillDiseaseType();
     ui->label->setVisible(false);
 //    ui->testBtn->setVisible(false);
@@ -46,6 +59,8 @@ void Widget::on_pushButton_clicked()
     diseaseList.clear();
     sessionMap.clear();
     ClearToRestart();
+
+    ui->isFinishCBX->setChecked(false);
 }
 
 void Widget::on_readInOut_clicked()
@@ -115,7 +130,7 @@ void Widget::readInOutExcel(QString path)
     inOutData.dis = var4.toDouble();
     qDebug()<<"@"<<inOutData.name<<inOutData.inImgIndex<<inOutData.outImgIndex<<inOutData.dis;
 
-    int disIndex = inOutData.outImgIndex - inOutData.inImgIndex + 1;
+    int disIndex = qAbs(inOutData.outImgIndex - inOutData.inImgIndex) + 1;
     oneImgDis = inOutData.dis/disIndex;
 
     disPixelW = bigImgW/sessionMile;
@@ -162,7 +177,7 @@ void Widget::readDiseaseExcel(QString path)
             {
                 temp.imageID = var.toInt();
                 //距起始图像的张数
-                int disIndex = temp.imageID - inOutData.inImgIndex;
+                int disIndex = qAbs(temp.imageID - inOutData.inImgIndex);
                 //图像左端距起始点距离
                 double dis = disIndex*oneImgDis;
                 //计算应该绘制的段图像索引
@@ -170,7 +185,7 @@ void Widget::readDiseaseExcel(QString path)
                 //图像距离段图像的距离
                 left = dis - sessionIndex*sessionMile;
             }
-            else if(j == 4){//病害类型，需要修改
+            else if(j == 4){//病害类型
                 temp.diseaseType = var.toString();
             }
             else if(j == 15){
@@ -188,11 +203,11 @@ void Widget::readDiseaseExcel(QString path)
                     }
                     int h = list2[1].toInt();
                     int w = list2[0].toInt();
-                    //缩放转换
+                    //缩放转换，小图像病害像素转换为段图像对应的像素
                     int x = (left + (w/smallImgW)*oneImgDis)*disPixelW;
                     int y = h/(smallImgH/disPixelH) + imgTopPixel;
                     //判断该图像是否被分割线一分为二
-                    if(w<=bigImgW){
+                    if(x<=bigImgW){
                         temp1.diseaseType = temp.diseaseType;
                         temp1.index = sessionIndex;
                         temp1.pts.append(QPointF(x,y));
@@ -201,7 +216,7 @@ void Widget::readDiseaseExcel(QString path)
                         bSplit = true;
                         temp2.diseaseType = temp.diseaseType;
                         temp2.index = sessionIndex + 1;
-                        temp2.pts.append(QPointF(x,y));
+                        temp2.pts.append(QPointF(x-bigImgW,y));
                     }
                     if(i == list.length() - 2){//处理的最后一个数据点
                         if(bSplit){
@@ -215,6 +230,77 @@ void Widget::readDiseaseExcel(QString path)
             }
         }
     }
+}
+
+void Widget::readTunnelMileExcel()
+{
+    QString projectPath = QDir::currentPath();
+    projectPath += "/Data/tunnelMile.xlsx";
+
+    QAxObject excel("Excel.Application");
+    excel.setProperty("Visble",false);
+    QAxObject* workbooks = excel.querySubObject("WorkBooks");
+    QAxObject* workbook = workbooks->querySubObject("Open(QString,QVariant,QVariant)",projectPath,3,true);
+    QAxObject* worksheet1 = workbook->querySubObject("Worksheets(int)",1);
+
+    QAxObject* usedRange = worksheet1->querySubObject("UsedRange");
+    QAxObject* rows = usedRange->querySubObject("Rows");
+    QAxObject* columns = usedRange->querySubObject("Columns");
+
+    //Excel索引从1开始
+    int intRowStart = usedRange->property("Row").toInt();
+    int intColStart = usedRange->property("Column").toInt();
+    int intRows = rows->property("Count").toInt();
+    int intCols = columns->property("Count").toInt();
+    qDebug()<<"FillDiseaseType:"<<intRowStart<<intColStart<<intRows<<intCols;
+    for(int i = intRowStart;i<intRowStart + intRows;i++){
+        tunnelMileInfo temp;
+        for(int j = intColStart;j<intColStart + intCols;j++)
+        {
+            QAxObject * range = worksheet1->querySubObject("Cells(int,int)", i, j );
+            QVariant var = range->property("Value");
+            if(j == 1){
+                temp.tunnelName = var.toString();
+            }
+            else if(j==2){
+                temp.nameParam1 = var.toString();
+            }
+            else if(j == 3){
+                temp.nameParam2 = var.toString();
+            }
+            else if(j == 4){
+                temp.startMile = var.toString();
+            }
+            else if(j== 5){
+                temp.endMile = var.toString();
+            }
+        }
+        temp.finalTunnelName = temp.tunnelName + "-" + temp.nameParam1 + "-" + temp.nameParam2;
+        tunnelMileList.append(temp);
+    }
+}
+
+void Widget::compareTunnelMile(QString start, QString end)
+{
+    double d_start = 0;
+    d_start = tunnelNoToMile(start);
+    double d_end;
+    d_end = tunnelNoToMile(end);
+    if(d_start < d_end){
+        isMinToMax = true;
+    }else{
+        isMinToMax = false;
+    }
+}
+
+double Widget::tunnelNoToMile(QString no)
+{
+    double temp;
+    QStringList list = no.split("+");
+    int k = list[0].right(3).toInt();
+    double m = list[1].toDouble();
+    temp = k*1000.0 + m;
+    return temp;
 }
 
 int Widget::getIndexByImgName(QString name)
@@ -249,6 +335,7 @@ void Widget::ClearToRestart()
 
 void Widget::FillDiseaseType()
 {
+    qDebug()<<"FillDiseaseType...";
     QString projectPath = QDir::currentPath();
     projectPath += "/Data/diseaseType.xlsx";
     qDebug()<<"appPath:"<<projectPath;
@@ -296,7 +383,7 @@ void Widget::FillDiseaseType()
 void Widget::Test0()
 {
 //    char ch[128] = "./150.jpg";
-    QString qStr = "F:/QtMyProjectTest/DrawDisease201705/150.jpg";
+    QString qStr = "F:/QtMyProjectTest/DrawDisease201705/test.jpg";
 //    string str("./150.jpg");
 //    string str = qStr.toStdString();
 //    cout<<"@@@"<<str;
@@ -338,13 +425,17 @@ void Widget::Test1()
 
 void Widget::on_startDrawBtn_clicked()
 {
+    //段图像总张数
     int sessionCount = inOutData.dis/sessionMile + 1;
+    //最后一张段图像的有效距离
     double lastMile = inOutData.dis - (sessionCount - 1)*sessionMile;
     int start = qRound((bigImgW/sessionMile)*lastMile);
     DrawThread* thread = new DrawThread(sessionCount);
     thread->m_lastImgStart = start;
     thread->m_lastImgEnd = bigImgW;
+    thread->tunnelNo = theTunnelMile;
     connect(thread,SIGNAL(sendRemain(int,int)),this,SLOT(updateRemain(int,int)));
+    connect(thread,SIGNAL(workFinished()),this,SLOT(threadWorkFinish()));
     thread->start();
 }
 
@@ -401,4 +492,109 @@ void Widget::on_pushButton_2_clicked()
     //程序中，必须先读取进出洞隧道信息，再读取病害信息
     readInOutExcel(inOutPath);
     readDiseaseExcel(diseasePath);
+    //读取隧道里程信息
+    readTunnelMileExcel();
+    //匹配查找当前隧道的起始里程信息
+    for(int i = 0;i<tunnelMileList.length();i++){
+//        qDebug()<<"@@@:"<<name<<tunnelMileList[i].finalTunnelName;
+        if(name == tunnelMileList[i].finalTunnelName){
+            //区分隧道上下行
+            QString start = tunnelMileList[i].startMile;
+            QString end = tunnelMileList[i].endMile;
+            compareTunnelMile(start,end);
+            qDebug()<<"###:"<<i;
+            theTunnelMile = tunnelMileList[i].startMile;
+            return;
+        }
+    }
+    qDebug()<<"Not Find!!!";
+}
+
+void Widget::on_pushButton_3_clicked()
+{
+    if(!finalOK){
+        return;
+    }
+    QAxObject excel("Excel.Application");
+    excel.setProperty("Visible", false);
+    QAxObject * workbooks = excel.querySubObject("WorkBooks");
+    workbooks->dynamicCall("Add");
+    QAxObject * workbook = excel.querySubObject("ActiveWorkBook");
+    QAxObject * worksheets = workbook->querySubObject("WorkSheets");
+    int intCount = worksheets->property("Count").toInt();
+    qDebug()<<intCount;
+    QAxObject * worksheet = workbook->querySubObject("Worksheets(int)", 1);
+
+    for(int i = 0;i<finalDiseaseList.length();i++)
+    {
+        QString no = finalDiseaseList[i].startMile;
+        bool b = finalDiseaseList[i].IsMin;
+        int i_b = 0;
+        if(b){
+            i_b = 1;
+        }
+        double d3 = finalDiseaseList[i].distanceRight;
+        double d4 = finalDiseaseList[i].length;
+        double d5 = finalDiseaseList[i].area;
+
+//        double x = pt.x();
+//        double y = pt.y();
+
+        QString param1,param2,param3,param4,param5;
+        param1 = "Cells(" + QString::number(i+1) + ",1)";
+        param2 = "Cells(" + QString::number(i+1) + ",2)";
+        param3 = "Cells(" + QString::number(i+1) + ",3)";
+        param4 = "Cells(" + QString::number(i+1) + ",4)";
+        param5 = "Cells(" + QString::number(i+1) + ",5)";
+        QByteArray baX;
+        QByteArray baY;
+        baX = param1.toLatin1();
+        baY = param2.toLatin1();
+        char* chX= NULL;
+        char* chY= NULL;
+        chX = baX.data();
+        chY = baY.data();
+
+        char* ch3 = NULL;
+        char* ch4= NULL;
+        char* ch5= NULL;
+        QByteArray ba3;
+        QByteArray ba4;
+        QByteArray ba5;
+        ba3 = param3.toLatin1();
+        ch3 = ba3.data();
+        ba4 = param4.toLatin1();
+        ch4 = ba4.data();
+        ba5 = param5.toLatin1();
+        ch5 = ba5.data();
+
+        QAxObject * rangeX = worksheet->querySubObject(chX);
+        bool b1 = rangeX->setProperty("Value",QVariant(no));
+
+        QAxObject * rangeY = worksheet->querySubObject(chY);
+        bool b2 = rangeY->setProperty("Value",QVariant(i_b));
+
+        QAxObject * range3 = worksheet->querySubObject(ch3);
+        bool b3 = range3->setProperty("Value",QVariant(d3));
+
+        QAxObject * range4 = worksheet->querySubObject(ch4);
+        bool b4 = range4->setProperty("Value",QVariant(d4));
+
+        QAxObject * range5 = worksheet->querySubObject(ch5);
+        bool b5 = range5->setProperty("Value",QVariant(d5));
+
+        qDebug()<<"###:"<<i;
+    }
+    QString fileName;
+    fileName = "F:\\QtMyProjectTest\\DrawDisease201705\\1.xlsx";
+
+    //保存时，提供的参数路径，需为Window格式，且不能为相对路径，否则不会生成
+    workbook->dynamicCall("SaveAs (const QString&)", fileName);
+    workbook->dynamicCall("Close (Boolean)", true);
+    excel.dynamicCall("Quit (void)");
+}
+
+void Widget::threadWorkFinish()
+{
+    ui->isFinishCBX->setChecked(true);
 }
